@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/shallow/crypto/implement/ATkv/poly/fips202.c
+stddef.h
+-
+stdint.h
+-
+fips202.h
+/home/shallow/crypto/implement/ATkv/poly/fips202.h
+
+/home/shallow/crypto/implement/ATkv/poly/fips202.h
+stddef.h
+-
+stdint.h
+-
+
