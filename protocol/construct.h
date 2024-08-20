@@ -12,6 +12,6 @@ void constructy(polyvecq *y ,polymatq *Fymat ,polyvecq *y1 ,polyvecq*y2);
 void constructD2(Polyq *D2list[] ,polyvecq *mu ,polymatq *Gamma);
 void constructd1(polyvecq *d1vec ,polyvecq* mu ,polymatq *Gamma ,polymatq *A);
 void constructm(polyvecq *m ,polyvecq *m1 ,polyvecq *m2 ,polyvecq *g ,polyvecq *y3 ,polyvecq *y4);
-void constructz(polyvecq *z ,polymatq*Fymat, polyvecq *tE, polyvecq *tg, polyvecq *t3, polyvecq *t4,Polyq*cpoly, polyvecq *z1, polyvecq *z2);
-void constructd(Polyq *d ,polyvecq* mu ,polymatq* Gamma ,polyvecq* c);
+void constructz(polyvecq *z ,polymatq*Fymat, polyvecq *tF, polyvecq *tg, polyvecq *t3, polyvecq *t4,Polyq*cpoly, polyvecq *z1, polyvecq *z2);
+void constructd0(Polyq *d ,polyvecq* mu ,polymatq* Gamma ,polyvecq* c , polyvecq *h);
 #endif

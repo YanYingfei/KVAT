@@ -65,6 +65,7 @@ void polyvec<T>::mul(T *res, polyvec *rvalue)
 }
 template <typename T>
 void polyvec<T>::add(polyvec *res, polyvec *rvalue){
+    assert(this->k == rvalue->k);
     for(int i = 0 ; i < k ; i++){
         this->polyarray[i]->add(res->polyarray[i] , rvalue->polyarray[i]);
     }
@@ -72,6 +73,7 @@ void polyvec<T>::add(polyvec *res, polyvec *rvalue){
 
 template <typename T>
 void polyvec<T>::sub(polyvec *res, polyvec *rvalue){
+    assert(this->k == rvalue->k);
     for(int i = 0 ; i < k ; i++){
         this->polyarray[i]->sub(res->polyarray[i] , rvalue->polyarray[i]);
     }
@@ -89,6 +91,7 @@ int polyvec<T>::equal(polyvec *rvalue){
 template <typename T>
 void polyvec<T>::mul_poly(polyvec *res, T *rvalue)
 {
+    assert(this->k == res->k);
     for(int i = 0 ; i < this->k ; i++){
         this->polyarray[i]->mul(res->polyarray[i] , rvalue);
     }

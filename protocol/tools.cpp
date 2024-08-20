@@ -51,7 +51,6 @@ int Rej0(int64_t *z , int64_t *v , double s , double GAMMA){
     M_ *= exp(-vec_norm(v ,256)/2/s/s) * cosh(vec_mul(z , v , 256)/s/s);
 
     M_ = 1/M_;
-    std::cout << M_ <<std::endl;
     if(a > M_){
         return 1;
     }
@@ -75,7 +74,6 @@ int Rej1(polyvecq *z, polyvecq *v, double s , double GAMMA){
 
     M_ = 1/M_;
     M_ *= exp(temp);
-    std::cout << M_ <<std::endl;
     if(a > M_){
         res = 1;
     }
@@ -88,11 +86,11 @@ int Rej1(polyvecq *z, polyvecq *v, double s , double GAMMA){
 }
 
 void sample_gamma(keccak_state *state, polymatq *res){
-    int64_t temp[TAU*(N+4)];
-    uniformq(state , temp , TAU*(N+4));
-    for(int i = 0 ; i < TAU ; i++){
-        for(int j = 0 ; j < N+4 ; j++){
-            res->vecarray[i]->polyarray[j]->polyarray[0] = temp[i*(N+4)+j];
+    int64_t temp[res->k*res->l];
+    uniformq(state , temp , res->k*res->l);
+    for(int i = 0 ; i < res->k ; i++){
+        for(int j = 0 ; j < res->l ; j++){
+            res->vecarray[i]->polyarray[j]->polyarray[0] = temp[i*res->l+j];
         }
     }
     
@@ -166,4 +164,11 @@ void Csamplepoly(keccak_state*state , Polyq *res){
             break;
         }
     }
+}
+
+void printfBstr(unsigned char *s , int l){
+    for(int i = 0; i < l ; i++){
+        printf("%02X" , s[i]);
+    }
+    printf("\n");
 }

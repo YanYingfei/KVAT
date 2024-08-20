@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/main_protocol.dir/main_protocol.cpp.o CMakeFiles/main_protocol.dir/pack.cpp.o CMakeFiles/main_protocol.dir/protocol1.cpp.o CMakeFiles/main_protocol.dir/protocol2.cpp.o CMakeFiles/main_protocol.dir/cpaenc.cpp.o CMakeFiles/main_protocol.dir/tools.cpp.o CMakeFiles/main_protocol.dir/construct.cpp.o -o main_protocol  ../poly/libpoly.a 

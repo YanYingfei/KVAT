@@ -12,12 +12,7 @@
 #include "cpaenc.h"
 #include "tools.h"
 #include <ctime>
-void printfBstr(unsigned char *s , int l){
-    for(int i = 0; i < l ; i++){
-        printf("%02X" , s[i]);
-    }
-    printf("\n");
-}
+
 void keygen(unsigned char* pk , unsigned char*sk){
     
     unsigned char seed1[32];
@@ -184,7 +179,8 @@ void AT_IT(unsigned char* pi2 , unsigned char* crsseed2 , unsigned char* resp ,u
     h->to_char(resp);
     clock_t t2 = clock();
     std::cout <<"IT " << (double)(t2-t1)/CLOCKS_PER_SEC << std::endl;
-    std::cout << Verify1(crsseed, pi1 , A , c) << std::endl;
+
+    std::cout << "verify1 "<< Verify1(crsseed, pi1 , A , c) << std::endl;
     clock_t t3 = clock();
     std::cout <<"verify1 " << (double)(t3-t2)/CLOCKS_PER_SEC << std::endl;
     setup(crsseed2);
@@ -211,7 +207,7 @@ void AT_CF(unsigned char* msg , unsigned char* pk , unsigned char*resp ,unsigned
     polyvecq *t = new polyvecq(N);
     polyvecq *x = new polyvecq(N);
     Polyq* h = new Polyq(0);
-
+    Polyq* v = new Polyq(0);
     Polyq* temp = new Polyq(1);
     unsigned char vchar[COMPOLYLEN];
     
@@ -220,8 +216,8 @@ void AT_CF(unsigned char* msg , unsigned char* pk , unsigned char*resp ,unsigned
     x->from_char(xchar , 0 , ETAR);
     t->mul(temp , x);
     temp->to_poly();
-    h->sub(h , temp);
-    Compress(vchar , h);
+    h->sub(v , temp);
+    Compress(vchar , v);
 
     memcpy(msg , H1input ,32+MD/8);
     memcpy(msg+32+MD/8 , vchar , COMPOLYLEN);
@@ -242,7 +238,7 @@ void AT_CF(unsigned char* msg , unsigned char* pk , unsigned char*resp ,unsigned
     clock_t t2 = clock();
     std::cout <<"CF " << (double)(t2-t1)/CLOCKS_PER_SEC << std::endl;
 
-    std::cout << Verify2(crsseed2 , pi2 , A , b , c , t , h) << std::endl;
+    std::cout << "verify2 " << Verify2(crsseed2 , pi2 , A , b , c , t , h) << std::endl;
     clock_t t3 = clock();
     std::cout <<"verify2 " << (double)(t3-t2)/CLOCKS_PER_SEC << std::endl;
 }
@@ -326,5 +322,4 @@ int main(){
     AT_CF(msg , pk , resp , H1input , xchar , query , pi2 , crsseed2);
     bit = AT_Rb(pk , sk , msg);
     std::cout << bit << std::endl;
-    std::cout << PI1LEN << " " << PI2LEN << std::endl;
 }

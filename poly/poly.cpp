@@ -54,8 +54,11 @@ void Poly<T>::mul(Poly *res, Poly *b){
 }
 template <typename T>
 int Poly<T>::equal(Poly *b){
+    this->to_poly();
+    b->to_poly();
+
     for(int i = 0 ; i < 128;i++){
-        if(this->polyarray[i] != b->polyarray[i]){
+        if(mod(this->polyarray[i]) != mod(b->polyarray[i])){
             return 0;
         }
     }
@@ -122,6 +125,7 @@ void Poly<T>::to_poly(){
 }
 template <typename T>
 void Poly<T>::sigma(Poly *res){
+    this->to_poly();
     res->set(this->polyarray , this->nttflag);
     if(res->nttflag == 1){
         res->to_poly();

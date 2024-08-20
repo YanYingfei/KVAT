@@ -20,4 +20,5 @@ void polyvec2vec(int64_t *res  , polyvecq *y);
 void geta(Polyq *ai , int norm);
 int Cjudge(Polyq* a);
 void Csamplepoly(keccak_state*state , Polyq *res);
+void printfBstr(unsigned char *s , int l);
 #endif
