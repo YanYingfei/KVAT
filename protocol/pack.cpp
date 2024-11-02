@@ -3,32 +3,28 @@
 #include <cmath>
 #include <iostream>
 
-void packpk(unsigned char* pk ,unsigned char* seedA, unsigned char *seedb , polyvecq*t){
+void packpk(unsigned char* pk ,unsigned char* seedA, polyvecq*t0 , polyvecq*t1){
     memcpy(pk , seedA , 32);
-    memcpy(pk+32 , seedb , 32);
-    t->to_char(pk+64);
+    t0->to_char(pk+32);
+    t1->to_char(pk+32+VECLEN);
 }
 
-void unpackpk(unsigned char* pk , unsigned char* seedA , unsigned char* seedb, polyvecq*t){
+void unpackpk(unsigned char* pk , unsigned char* seedA ,polyvecq*t0 , polyvecq*t1){
     memcpy(seedA , pk , 32);
-    memcpy(seedb , pk+32, 32);
-    t->from_char(pk+64 , 1);
+    t0->from_char(pk+32 , 1);
+    t1->from_char(pk+32+VECLEN , 1);
 }
 
-void packsk(unsigned char*sk ,polyvecq*s0,polyvecq*s1,polyvecq*s2,polyvecq*e1 ,unsigned char* k){
+void packsk(unsigned char*sk ,polyvecq*s0,polyvecq*s1,unsigned char* k){
     s0->to_char(sk , ETAR);
     s1->to_char(sk+VECETALEN , ETAR);
-    s2->to_char(sk+2*VECETALEN , ETAR);
-    e1->to_char(sk+3*VECETALEN , ETAR);
-    memcpy(sk+4*VECETALEN ,k , 32);
+    memcpy(sk+2*VECETALEN ,k , 32);
 }
 
-void unpacksk(unsigned char*sk ,polyvecq*s0,polyvecq*s1,polyvecq*s2,polyvecq*e1 , unsigned char* k){
+void unpacksk(unsigned char*sk ,polyvecq*s0, polyvecq*s1, unsigned char* k){
     s0->from_char(sk , 0 , ETAR);
     s1->from_char(sk+VECETALEN ,0 ,  ETAR);
-    s2->from_char(sk+2*VECETALEN ,0 ,  ETAR);
-    e1->from_char(sk+3*VECETALEN ,0 ,  ETAR);
-    memcpy(k , sk+4*VECETALEN , 32);
+    memcpy(k , sk+2*VECETALEN , 32);
 }
 
 void Compress(unsigned char *res, Polyq *h){

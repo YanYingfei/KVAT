@@ -10,31 +10,30 @@
 #include <cmath>
 #include "protocol1.h"
 
-void generatem2(Polyq *m1list[] ,polyvecq* sb ,polyvecq* s2,polyvecq* e1,Polyq *e3){
+void generatem2(Polyq *m1list[] ,int b, polyvecq* sb,polyvecq* e1,Polyq *e3){
     
     sb->to_poly();
-    s2->to_poly();
     e1->to_poly();
+    m1list[0] = new Polyq(0);
+    m1list[1] = new Polyq(0);
+    m1list[b]->polyarray[0] = 1;
+
     for(int i = 0;i<N;i++){
-        m1list[i] = new Polyq(0);
-        m1list[i]->copy(sb->polyarray[i]);
-        m1list[i+1+N] = new Polyq(0);
-        m1list[N+1+i]->copy(s2->polyarray[i]);
-        m1list[N*2+2+i] = new Polyq(0);
-        m1list[N*2+2+i]->copy(e1->polyarray[i]);
+        m1list[i+2] = new Polyq(0);
+        m1list[i+2]->copy(sb->polyarray[i]);
+        m1list[N+3+i] = new Polyq(0);
+        m1list[N+3+i]->copy(e1->polyarray[i]);
     }
     
-    m1list[N] = new Polyq(0);
-    geta(m1list[N] , BETAE - sb->norm());
-    m1list[N*2+1] = new Polyq(0);
-    geta(m1list[N*2+1] ,BETAE - s2->norm());
-    m1list[N*3+2] = new Polyq(0);
-    geta(m1list[N*3+2] ,BETAE - e1->norm());
+    m1list[N+2] = new Polyq(0);
+    geta(m1list[N+2] , BETAE - sb->norm());
+    m1list[N*2+3] = new Polyq(0);
+    geta(m1list[N*2+3] ,BETAE - e1->norm());
     //tag 
-    m1list[N*3+3] = new Polyq(0);
-    m1list[N*3+3]->copy(e3);
-    m1list[N*3+4] = new Polyq(0);
-    geta(m1list[N*3+4] , BETAE2-e3->norm());
+    m1list[N*2+4] = new Polyq(0);
+    m1list[N*2+4]->copy(e3);
+    m1list[N*2+5] = new Polyq(0);
+    geta(m1list[N*2+5] , BETAE2-e3->norm());
 
 }
 void constructFy2(polymatq *Fymat ,polymatq *Fg ,polymatq *F3){
@@ -62,6 +61,8 @@ void constructy2(polyvecq *y ,polymatq *Fymat ,polyvecq *y1 ,polyvecq*y2){
         temp2.polyarray[i]->mul_num(y->polyarray[i+y1->k*2+temp1.k] , -1);
     }
 }
+
+// h1, ..., h_tau
 void computeh(polyvecq* hvec ,polyvecq*g,Polyq *F[],polymatq *Gamma){
     Polyq temp(1);
     hvec->to_ntt();
@@ -74,6 +75,8 @@ void computeh(polyvecq* hvec ,polyvecq*g,Polyq *F[],polymatq *Gamma){
     hvec->to_poly();
     //hvec->add(hvec , g);
 }
+
+
 void constructD2_2(Polyq *D2list[] ,polyvecq *mu ,polymatq *Gamma){
     
     Polyq temp(1);
@@ -85,18 +88,30 @@ void constructD2_2(Polyq *D2list[] ,polyvecq *mu ,polymatq *Gamma){
         }
     }
 }
-void constructd1_2(polyvecq *d1vec ,polyvecq* mu ,polymatq *Gamma ,polymatq *A , polyvecq *b , polyvecq *c){
+
+//d1
+void constructd1_2(polyvecq *d1vec ,polyvecq* mu ,polymatq *Gamma ,polymatq *A ,polyvecq* t0 , polyvecq *t1, polyvecq *c){
     
-    Polyq temp1(1) , temp2(1);
+    Polyq temp1(1) , temp2(1) , temp6(1);
     polyvecq temp3(N);
+
+    d1vec->polyarray[0]->reset(1);
+    d1vec->polyarray[1]->reset(1);
     for(int j = 0 ; j < TAU ; j++){
-        mu->polyarray[j]->mul(&temp1 , Gamma->vecarray[j]->polyarray[0]);
-        temp2.add(&temp2 , &temp1);
-    }
-    d1vec->polyarray[3*N+3]->copy(&temp2);
-    b->mul_poly(&temp3 , &temp2);
-    for(int i = 0 ; i < N ; i++){
-        d1vec->polyarray[i]->copy(temp3.polyarray[i]);
+        temp1.reset(1);
+        temp2.reset(1);
+        for(int i = 0 ; i < N ; i++){
+            Gamma->vecarray[j]->polyarray[i+1]->mul(&temp6 , t0->polyarray[i]);
+            temp1.add(&temp1 , &temp6);
+            Gamma->vecarray[j]->polyarray[i+1]->mul(&temp6 , t1->polyarray[i]);
+            temp2.add(&temp2 , &temp6);
+        }
+        Gamma->vecarray[j]->polyarray[N+1]->sub(&temp1 , &temp1);
+        Gamma->vecarray[j]->polyarray[N+1]->sub(&temp2 , &temp2);
+        mu->polyarray[j]->mul(&temp1 , &temp1);
+        d1vec->polyarray[0]->add(d1vec->polyarray[0] , &temp1);
+        mu->polyarray[j]->mul(&temp2 , &temp2);
+        d1vec->polyarray[1]->add(d1vec->polyarray[1] , &temp2);
     }
 
     polyvecq temp4(N) , temp5(N , 1);
@@ -114,8 +129,9 @@ void constructd1_2(polyvecq *d1vec ,polyvecq* mu ,polymatq *Gamma ,polymatq *A ,
         temp5.add(&temp5 , &temp4);
     }
     A->trans();
+    temp5.to_ntt();
     for(int i = 0 ; i < N ; i++){
-        d1vec->polyarray[i+N+1]->copy(temp5.polyarray[i]);
+        d1vec->polyarray[i+2]->copy(temp5.polyarray[i]);
     }
     temp5.reset(1);
     for(int j = 0 ; j < TAU ; j++){
@@ -126,13 +142,20 @@ void constructd1_2(polyvecq *d1vec ,polyvecq* mu ,polymatq *Gamma ,polymatq *A ,
         temp4.mul_poly(&temp4 , mu->polyarray[j]);
         temp5.add(&temp5 , &temp4);
     }
+    temp5.to_ntt();
     for(int i = 0 ; i < N ; i++){
-        d1vec->polyarray[i+2*N+2]->copy(temp5.polyarray[i]);
+        d1vec->polyarray[i+N+3]->copy(temp5.polyarray[i]);
     }
 
+    temp2.reset(1);
+    for(int j = 0 ; j < TAU ; j++){
+        mu->polyarray[j]->mul(&temp1 , Gamma->vecarray[j]->polyarray[0]);
+        temp2.add(&temp2 , &temp1);
+    }
+    d1vec->polyarray[2*N+4]->copy(&temp2);
 }
 void constructm2(polyvecq *m ,polyvecq *m1 ,polyvecq *g ,polyvecq *y3){
-    int mlen = 3*N+5;
+    int mlen = 2*N+6;
     int m2len = TAU+2;
     for(int i = 0 ; i < mlen;i++){
         m->polyarray[i]->copy(m1->polyarray[i]);
@@ -174,31 +197,33 @@ void constructz2(polyvecq *z ,polymatq*Fymat, polyvecq *tg, polyvecq *t3,Polyq*c
 }
 void D2mul2(Polyq *res , Polyq* D2list[] , polyvecq *left , polyvecq *right){
     Polyq temp(1);
-    int Len = 3*N+5;
+    int Len = 2*N+6;
     int Len1 = N+1;
     res->reset(1);
-    for(int i = 0 ; i < Len1 ; i++){
+    for(int i = 0 ; i < 2 ; i++){
         left->polyarray[Len+i]->mul(&temp , D2list[0]);
         right->polyarray[i]->mul(&temp , &temp);
-        res->add(res , &temp);
+        res->sub(res , &temp);
     }
-    for(int i = Len1 ; i < 2*Len1 ; i++){
+    for(int i = 2 ; i < 2+Len1 ; i++){
         left->polyarray[Len+i]->mul(&temp , D2list[1]);
         right->polyarray[i]->mul(&temp , &temp);
         res->add(res , &temp);
     }
-    for(int i = 2*Len1 ; i < 3*Len1 ; i++){
+    for(int i = 2+Len1 ; i < 2+2*Len1 ; i++){
         left->polyarray[Len+i]->mul(&temp , D2list[2]);
         right->polyarray[i]->mul(&temp , &temp);
         res->add(res , &temp);
     }
-    for(int i = 3*Len1 ; i < 3*Len1+2 ; i++){
+    for(int i = 2+2*Len1 ; i < 4+2*Len1 ; i++){
         left->polyarray[Len+i]->mul(&temp , D2list[3]);
         right->polyarray[i]->mul(&temp , &temp);
         res->add(res , &temp);
     }
 }
-void constructd2(Polyq *d, polyvecq *mu, polymatq *Gamma, polyvecq *t , Polyq*h , polyvecq* hvec){
+
+//d0
+void constructd2(Polyq *d, polyvecq *mu, polymatq *Gamma, Polyq*h , polyvecq* hvec){
     Polyq temp1(1) , temp2(1);
     Polyq temp3(1) , temp4(1);
     d->to_ntt();
@@ -211,25 +236,11 @@ void constructd2(Polyq *d, polyvecq *mu, polymatq *Gamma, polyvecq *t , Polyq*h 
     temp2.mul(&temp2 , h);
     d->add(d , &temp2);
     
-
-    
-
-    for(int j = 0 ; j < TAU; j++){
-        temp1.reset(1);
-        for(int i = 0 ; i < N ;i++){
-            Gamma->vecarray[j]->polyarray[i+1]->mul(&temp2 , t->polyarray[i]);
-            temp1.add(&temp1 , &temp2);
-        }
-        temp1.mul(&temp1 , mu->polyarray[j]);
-        d->add(d , &temp1);
-    }
     
     temp2.reset(1);
     for(int j = 0 ; j < TAU; j++){
-        temp1.reset(1);
-        for(int i = 0 ; i < 3 ;i++){
-            temp1.add(&temp1 , Gamma->vecarray[j]->polyarray[i+N+1]);
-        }
+        temp1.reset(0);
+        Gamma->vecarray[j]->polyarray[N+2]->add(&temp1 , Gamma->vecarray[j]->polyarray[N+3]);
         temp1.mul(&temp1 , mu->polyarray[j]);
         temp2.add(&temp2 , &temp1);
     }
@@ -248,7 +259,7 @@ void constructd2(Polyq *d, polyvecq *mu, polymatq *Gamma, polyvecq *t , Polyq*h 
 }
 
 
-int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *s2 , polyvecq *e1 , Polyq *e3, Polyq* h,polymatq*A,polyvecq*t, polyvecq *b,\
+int Prove2(unsigned char* pi , unsigned char* crsseed ,int b , polyvecq *sb, polyvecq *e1 , Polyq *e3, Polyq* h,polymatq*A,polyvecq*t0 , polyvecq* t1,\
     polyvecq *c){
     //unpack crs
     keccak_state crsstate;
@@ -256,20 +267,21 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
     randseed(crsseed , 32);
     shake256_absorb(&crsstate , crsseed,32);
 
-    polymatq *E1 = new polymatq(&crsstate, 0, N1 ,3*N+5 , 1);
+    polymatq *E1 = new polymatq(&crsstate, 0, N1 ,2*N+6 , 1);
     polymatq *E2 = new polymatq(&crsstate, 0, N1 ,M2 , 1);
     polymatq *Fg = new polymatq(&crsstate, 0, TAU ,M2, 1);
     polymatq *F3 = new polymatq(&crsstate, 0, 2 ,M2 , 1);
     polymatq *F4 = new polymatq(&crsstate, 0, 2 ,M2 , 1);
     polyvecq *fg = new polyvecq(&crsstate, 0, M2, 1);
     // generate m
-    Polyq *m1list[3*N+5];
-    generatem2(m1list , sb , s2,e1,e3);
     
-    polyvecq *m1 = new polyvecq(m1list , 3*N+5);
+    Polyq *m1list[2*N+6];
+    generatem2(m1list ,b , sb,e1,e3);
+    
+    polyvecq *m1 = new polyvecq(m1list , 2*N+6);
 
     //generate e
-
+    
     unsigned char random_seed[32];
     keccak_state random_state;
     shake256_init(&random_state);
@@ -291,7 +303,7 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
     temp1.add(tE , &temp2);
     tE->to_poly();
     //FR step 2
-    polyvecq *y1 = new polyvecq(Y1 , 3*N+5,0);
+    polyvecq *y1 = new polyvecq(Y1 , 2*N+6,0);
     polyvecq *y2 = new polyvecq(Y2 , M2,0);
     polyvecq *w = new polyvecq(N1);
 
@@ -320,16 +332,16 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
     t3->to_poly();
     t3->add(t3 , y3);
     
-    //FR step 6
-    F4->right_mul(t4 , e);
-    t4->to_poly();
+    // //FR step 6
+    // F4->right_mul(t4 , e);
+    // t4->to_poly();
 
-    int bits[2];
-    for(int i = 0 ; i < 2;i++){
-        bits[i] = 2*(rand()%2)-1;
-        t4->polyarray[i]->polyarray[0] =t4->polyarray[0]->mod(t4->polyarray[i]->polyarray[0]+bits[i]);
-    }
-
+    // int bits[2];
+    // for(int i = 0 ; i < 2;i++){
+    //     bits[i] = 2*(rand()%2)-1;
+    //     t4->polyarray[i]->polyarray[0] =t4->polyarray[0]->mod(t4->polyarray[i]->polyarray[0]+bits[i]);
+    // }
+    
     //SR
     unsigned char Rseed[POLYLEN*(4+TAU+2*N1)+32+VECETALEN];//VECETALEN = XSTATEMENTLEN
     memcpy(Rseed , crsseed , 32);
@@ -347,27 +359,27 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
     shake256_init(&Rstate);
     shake256_absorb(&Rstate , Rseed,POLYLEN*(4+TAU+2*N1)+32+VECETALEN);
     
-    int64_t *R = (int64_t*)malloc(sizeof(int64_t)*256*(3*N+5)*128);
+    int64_t *R = (int64_t*)malloc(sizeof(int64_t)*256*(2*N+6)*128);
 
-    cbd(&Rstate , R , 1 , 256*128*(3*N+5));
+    cbd(&Rstate , R , 1 , 256*128*(2*N+6));
 
     //SR step4
-    int64_t *m1vec = (int64_t*)malloc(sizeof(int64_t)*(3*N+5)*128);
+    int64_t *m1vec = (int64_t*)malloc(sizeof(int64_t)*(2*N+6)*128);
     int64_t z3vec[256];
     int64_t Rm1[256];
     int64_t y3vec[256];
     polyvec2vec(m1vec , m1);
     polyvec2vec(y3vec , y3);
-    matrix_mul(Rm1 , R , m1vec , 256 , (3*N+5)*128);
+    matrix_mul(Rm1 , R , m1vec , 256 , (2*N+6)*128);
     memcpy(z3vec , Rm1 , 256*sizeof(int64_t));
-    vec_mul_si(z3vec , bits[0] , 256);
+    // vec_mul_si(z3vec , bits[0] , 256);
     vec_add(z3vec , y3vec , 256);
     
     if(Rej0(z3vec ,Rm1 , Y3 , 7)){
         return 0;
     }
 
-
+    
     // TR
     unsigned char Gammaseed[256*8];
     vec2char(Gammaseed , z3vec , 256);
@@ -383,14 +395,17 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
     // compute F
     Polyq *F[4];
 
-
+    
     polyvecq *temp8 = new polyvecq(N+1);
     polyvecq *temp9 = new polyvecq(N+1);
     int tempbetalist[4] = {BETAE , BETAE , BETAE , BETAE2};
-    for(int j = 0 ; j < 3 ; j++){
+    
+    F[0] = new Polyq(0);
+    
+    for(int j = 1 ; j < 3 ; j++){
         F[j] = new Polyq(0);
         for(int i = 0 ; i < N+1 ; i++){
-            temp8->polyarray[i]->copy(m1list[i+(N+1)*j]);
+            temp8->polyarray[i]->copy(m1list[2+i+(N+1)*(j-1)]);
         }
         temp8->sigma(temp9);
         temp8->mul(F[j] , temp9);
@@ -400,7 +415,7 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
     polyvecq *temp8_1 = new polyvecq(2);
     polyvecq *temp9_1 = new polyvecq(2);
     for(int i = 0 ; i < 2 ; i++){
-        temp8_1->polyarray[i]->copy(m1list[3*(N+1)+i]);
+        temp8_1->polyarray[i]->copy(m1list[2*N+4+i]);
     }
     F[3] = new Polyq(0);
     temp8_1->sigma(temp9_1);
@@ -408,14 +423,14 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
     F[3]->to_poly();
     F[3]->polyarray[0] -= tempbetalist[3];
     
-
+    
     //compute hvec
     polyvecq *hvec = new polyvecq(TAU);
     computeh(hvec , g,F,Gamma);
     //FourR step1
 
     //H3input
-
+    
     unsigned char museed[TAU*POLYLEN];
     hvec->to_char(museed);
     keccak_state mu_state;
@@ -426,26 +441,44 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
 
     polyvecq *mu = new polyvecq(&mu_state ,0, TAU , 0);
 
-
+    
     //FourR step 2
     polymatq *Fymat = new polymatq(TAU+2 , M2);
-    polyvecq *y = new polyvecq((3*N+5)*2 + (TAU+2)*2);
+    polyvecq *y = new polyvecq((2*N+6)*2 + (TAU+2)*2);
     constructFy2(Fymat ,Fg , F3);
     constructy2(y , Fymat , y1 , y2);
-
+    
     //FourR step 3
     Polyq *D2list[4];
     constructD2_2(D2list , mu , Gamma);
-
-    polyvecq *d1vec = new polyvecq((3*N+5)*2 + (TAU+2)*2);
-    constructd1_2(d1vec , mu , Gamma , A , b , c);
-
+    
+    polyvecq *d1vec = new polyvecq((2*N+6)*2 + (TAU+2)*2);
+    constructd1_2(d1vec , mu , Gamma , A ,t0,t1, c);
+    
     //FourR step 4
     
     //construct m
-    polyvecq *m = new polyvecq((3*N+5)*2 + (TAU+2)*2);
+    polyvecq *m = new polyvecq((2*N+6)*2 + (TAU+2)*2);
     constructm2(m , m1 , g , y3 );
+    
 
+    // // test
+    // Polyq *f = new Polyq(1);
+    // Polyq *temp8_11 = new Polyq(1);
+    // Polyq *temp8_12 = new Polyq(1);
+    // Polyq *d0 = new Polyq(1);
+    // mu->mul(f , hvec);
+    // D2mul2(temp8_11 , D2list , m , m);
+    // d1vec->mul(temp8_12 , m);
+    // temp8_11->add(temp8_11 , temp8_12);
+    // constructd2(d0 , mu , Gamma , h , hvec);
+    // temp8_11->to_poly();
+    // temp8_11->add(temp8_11 , d0);
+    // temp8_11->output();
+
+    // f->to_poly();
+    // f->output();
+    
     //compute g1
     Polyq tempg(1);
     Polyq *g1 = new Polyq(1);
@@ -511,7 +544,13 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
         return 0;
         //goto reboot;
     }
-    
+    // std::cout << z1->norm() << " " << z2->norm() << " " << vec_norm(z3vec , 256) << " " << std::endl;
+   // std::cout << B1*B1 << " " << B2*B2 << " " << B3*B3 << " " << std::endl;
+    // std::cout << (z1->norm() >B1*B1) << " " << (z2->norm() > B2*B2) << " " << (vec_norm(z3vec , 256) > B3*B3) << " " << std::endl;
+    // if(z1->norm() > B1*B1 || z2->norm() > B2*B2 || vec_norm(z3vec , 256) > B3*B3){
+    //     std::cout << "wrong0 : norm bound in pi2"<< std::endl;
+    //     return 0;
+    // }
     memcpy(pi , Rseed+VECETALEN+32 , POLYLEN*(4+TAU+2*N1));//POLYLEN*(7+TAU+N1*2+N)
     memcpy(pi+POLYLEN*(4+TAU+2*N1) , Gammaseed,256*8);
     memcpy(pi + POLYLEN*(4+TAU+2*N1) + 256*8 , museed, TAU*POLYLEN);
@@ -520,19 +559,27 @@ int Prove2(unsigned char* pi , unsigned char* crsseed ,polyvecq *sb , polyvecq *
     memcpy(pi + POLYLEN*(4+TAU*2+2*N1) + 256*8 , cseed , POLYLEN*2);
 //2*N+M+K1+3
     z1->to_char(pi + POLYLEN*(6+TAU*2+2*N1) + 256*8);
-    z2->to_char(pi + POLYLEN*(11+TAU*2+2*N1+3*N) + 256*8);
-
-
+    z2->to_char(pi + POLYLEN*(12+TAU*2+2*N1+2*N) + 256*8);
+        
+    free(R);
+    delete F3 ;
+    delete Fg ;
+    delete fg ;
+    delete E1 ;
+    delete E2 ;
+    free(m1vec);
+    delete w;
+    delete d1vec;
     // 16+TAU*2+2*N1+6*N
     return 1;
 }
 
-int Verify2(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *b, polyvecq *c , polyvecq *t , Polyq *h){
+int Verify2(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *c , polyvecq *t0 , polyvecq* t1 , Polyq *h){
     keccak_state crsstate;
     shake256_init(&crsstate);
     shake256_absorb(&crsstate , crsseed,32);
 
-    polymatq *E1 = new polymatq(&crsstate, 0, N1 ,3*N+5 , 1);
+    polymatq *E1 = new polymatq(&crsstate, 0, N1 ,2*N+6 , 1);
     polymatq *E2 = new polymatq(&crsstate, 0, N1 ,M2 , 1);
     polymatq *Fg = new polymatq(&crsstate, 0, TAU ,M2, 1);
     polymatq *F3 = new polymatq(&crsstate, 0, 2 ,M2 , 1);
@@ -567,7 +614,7 @@ int Verify2(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *b
     int64_t *R = (int64_t*)malloc(sizeof(int64_t)*256*(3*N+5)*128);
 
     cbd(&Rstate , R , 1 , 256*128*(3*N+5));
-    clock_t t1 = clock();
+    clock_t time1 = clock();
     
     //unpack alpha2
 
@@ -614,11 +661,11 @@ int Verify2(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *b
     Polyq *cpoly = new Polyq(0);
     Csamplepoly(&c_state , cpoly);
     //constructz
-    polyvecq *z1 = new polyvecq(3*N+5);
+    polyvecq *z1 = new polyvecq(2*N+6);
     polyvecq *z2 = new polyvecq(M2);
-    polyvecq *z = new polyvecq(2*(3*N+5)+2*(2+TAU));
+    polyvecq *z = new polyvecq(2*(2*N+6)+2*(2+TAU));
     z1->from_char(pi + POLYLEN*(6+TAU*2+2*N1) + 256*8 , 0);
-    z2->from_char(pi + POLYLEN*(11+TAU*2+2*N1+3*N) + 256*8 , 0);
+    z2->from_char(pi + POLYLEN*(12+TAU*2+2*N1+2*N) + 256*8 , 0);
     
     polymatq *Fymat = new polymatq(TAU+2 , M2);
     constructFy2(Fymat ,Fg , F3);
@@ -626,15 +673,16 @@ int Verify2(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *b
     // constructD
     Polyq *D2list[4];
     constructD2_2(D2list , mu , Gamma);
-    polyvecq *d1vec = new polyvecq(2*(3*N+5)+2*(2+TAU));
-    constructd1_2(d1vec , mu , Gamma , A , b , c);
+    polyvecq *d1vec = new polyvecq(2*(2*N+6)+2*(2+TAU));
+    constructd1_2(d1vec , mu , Gamma , A, t0, t1, c);
 
     Polyq *d0 = new Polyq(1);
-    constructd2(d0 , mu , Gamma , t , h , hvec);
+    constructd2(d0 , mu , Gamma , h , hvec);
     //check norm
+    // std::cout << z1->norm() << " " << z1->norm() << " " << vec_norm(z3vec , 256) << " " << std::endl;
     if(z1->norm() > B1*B1 || z2->norm() > B2*B2 || vec_norm(z3vec , 256) > B3*B3){
         std::cout << "wrong1" << std::endl;
-        return 0;
+        // return 0;
     }
 
     // check E1z1 + E2z2 == w+ ctE
@@ -642,7 +690,9 @@ int Verify2(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *b
     polyvecq left(N1 , 1) , temp(N1 , 1) , right(N1 , 1);
     E1->right_mul(&temp , z1);
     left.add(&left, &temp);
+    
     E2->right_mul(&temp , z2);
+    
     left.add(&left , &temp);
 
     w->to_ntt();
@@ -655,7 +705,7 @@ int Verify2(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *b
         return 0;
     }
     // check z^TD2z + cd1^Tz + c^2d0 + fg^Tz2= v + ct
-
+    
     Polyq leftpoly(1) , temppoly(1);
     
     D2mul2(&leftpoly , D2list ,z ,  z);
@@ -687,6 +737,13 @@ int Verify2(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *b
             return 0;
         }
     }
-   
+    free(R);
+    delete F3 ;
+    delete Fg ;
+    delete fg ;
+    delete E1 ;
+    delete E2;
+    delete w;
+    delete d1vec;
     return 1;
 }

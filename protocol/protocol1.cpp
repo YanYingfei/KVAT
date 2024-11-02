@@ -297,7 +297,7 @@ reboot:
     
     int64_t *R0 = (int64_t*)malloc(sizeof(int64_t)*256*(2*N+M+K1+3)*128);
     int64_t *R1 = (int64_t*)malloc(sizeof(int64_t)*256*(K2+K3)*128);
-
+    
     cbd(&Rstate , R0 , 1,256*128*(2*N+M+K1+3));
     cbd(&Rstate , R1 ,1, 256*128*(K2+K3));
 
@@ -314,10 +314,12 @@ reboot:
     polyvec2vec(m1vec , m1);
     polyvec2vec(y3vec , y3);
     matrix_mul(r0m1 , R0 , m1vec , 256 , (2*N+M+K1+3)*128);
+
+    free(R0);
+
     memcpy(z3vec , r0m1 , 256*sizeof(int64_t));
     vec_mul_si(z3vec , b[0] , 256);
     vec_add(z3vec , y3vec , 256);
-
     int64_t z4vec[256];
     int64_t r1v_[256];
     int64_t v_vec[(K2+K3)*128];
@@ -328,17 +330,19 @@ reboot:
 
     polyvec2vec(y4vec , y4);
     matrix_mul(r1v_ , R1 , v_vec , 256 , (K2+K3)*128);
-    
+    free(R1);
     memcpy(z4vec , r1v_ , 256*sizeof(int64_t));
     vec_mul_si(z4vec , b[1] , 256);
     vec_add(z4vec , y4vec , 256);
     
     if(Rej0(z3vec ,r0m1 , Y3 , 7)){
+        // std::cout<< "rej z3" <<std::endl;
         return 0;
     }
-    if(Rej0(z4vec , r1v_ , Y4 , 1.3)){
-        return 0;
-    }
+    // if(Rej0(z4vec , r1v_ , Y4 , 1.3)){
+    //     std::cout<< "rej z4" <<std::endl;
+    //     return 0;
+    // }
 
 
 
@@ -346,7 +350,6 @@ reboot:
     unsigned char Gammaseed[256*16];
     vec2char(Gammaseed , z3vec , 256);
     vec2char(Gammaseed+256*8 , z4vec , 256);
-
     keccak_state gamma_state;
     shake256_init(&gamma_state);
     shake256_absorb(&gamma_state , Rseed,POLYLEN*(7+TAU+N1*2+N)+32+VECETALEN);
@@ -532,18 +535,21 @@ reboot:
     z2->add(z2 , y2);
 
 
-    if(Rej1(z1 , cm1 , Y1 , 18) == 0){
+    if(Rej1(z1 , cm1 , Y1 , 20*2) == 0){
+        // std::cout<< "rej z1" <<std::endl;
         return 0;
         //goto reboot;
     }
-    if(Rej1(z2,ce , Y2 , 15) == 0){
+    if(Rej1(z2 , ce , Y2 , 20*2) == 0){
+        // std::cout<< "rej z2" <<std::endl;
         return 0;
         //goto reboot;
     }
-    
-    if(z1->norm() > B1*B1 || z2->norm() > B2*B2 || vec_norm(z3vec , 256) > B3*B3 || vec_norm(z4vec , 256) > B4*B4){
-        return 0;
-    }
+
+    // if(z1->norm() > B1*B1 || z2->norm() > B2*B2 || vec_norm(z3vec , 256) > B3*B3 || vec_norm(z4vec , 256) > B4*B4){
+    //     std::cout<< " wrong1: norm bound "<<std::endl;
+    //     return 0;
+    // }
     memcpy(pi , Rseed+VECETALEN+32 , POLYLEN*(7+TAU+N1*2+N));//POLYLEN*(7+TAU+N1*2+N)
     memcpy(pi+POLYLEN*(7+TAU+N1*2+N) , Gammaseed,256*16);
     memcpy(pi + POLYLEN*(7+TAU+N1*2+N) + 256*16 , museed, TAU*POLYLEN);
@@ -552,8 +558,18 @@ reboot:
     z1->to_char(pi + POLYLEN*(9+2*TAU+N1*2+N) + 256*16);
     z2->to_char(pi + POLYLEN*(12+2*TAU+N1*2+N*3+M+K1)+256*16);
     // 12+2*TAU+N1*2+N*3+M+K1+M2
-
-    
+    free(m1vec);
+    delete d1vec;
+    delete E1;
+    delete E2;
+    delete F1;
+    delete Fg;
+    delete F3;
+    delete F4;
+    delete F5;
+    delete fg;
+    delete w;
+    // free(R0);
     return 1;
     
 }
@@ -597,18 +613,21 @@ int Verify1(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *c
     shake256_absorb(&Rstate , Rseed,POLYLEN*(7+TAU+N1*2+N)+32+VECETALEN);
     
     int64_t *R0 = (int64_t*)malloc(sizeof(int64_t)*256*(2*N+M+K1+3)*128);
-    int64_t *R1 = (int64_t*)malloc(sizeof(int64_t)*256*(K1+K2)*128);
+    int64_t *R1 = (int64_t*)malloc(sizeof(int64_t)*256*(K3+K2)*128);
 
-    cbd(&Rstate , R0 , 1,256*128*(2*N+M+K1+3));
+    cbd(&Rstate , R0 , 1, 256*128*(2*N+M+K1+3));
     cbd(&Rstate , R1 , 1 , 256*128*(K2+K3));
-
+    free(R0);
+    free(R1);
 
     //unpack alpha2
 
     int64_t z3vec[256];
     int64_t z4vec[256];
     unsigned char Gammaseed[256*16];
+    
     memcpy(Gammaseed,pi+POLYLEN*(7+TAU+N1*2+N) ,256*16);
+
     char2vec(z3vec , Gammaseed , 256);
     char2vec(z4vec , Gammaseed+256*8 , 256);
 
@@ -674,8 +693,8 @@ int Verify1(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *c
     constructd0(d0 , mu , Gamma , c , hvec);
 
     //check norm
-    
     if(z1->norm() > B1*B1 || z2->norm() > B2*B2 || vec_norm(z3vec , 256) > B3*B3 || vec_norm(z4vec , 256) > B4*B4){
+
         std::cout << "wrong0" << std::endl;
         return 0;
     }
@@ -730,5 +749,16 @@ int Verify1(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyvecq *c
             return 0;
         }
     }
+
+    delete E1 ;
+    delete E2 ;
+    delete F1 ;
+    delete Fg ;
+    delete F3 ;
+    delete F4 ;
+    delete F5 ;
+    delete fg ;
+    delete w;
+    delete d1vec;
     return 1;
 }

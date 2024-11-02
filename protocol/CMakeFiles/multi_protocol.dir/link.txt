@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/multi_protocol.dir/multi_protocol.cpp.o CMakeFiles/multi_protocol.dir/protocol_batch.cpp.o CMakeFiles/multi_protocol.dir/pack.cpp.o CMakeFiles/multi_protocol.dir/protocol1.cpp.o CMakeFiles/multi_protocol.dir/cpaenc.cpp.o CMakeFiles/multi_protocol.dir/tools.cpp.o CMakeFiles/multi_protocol.dir/construct.cpp.o -o multi_protocol  ../poly/libpoly.a 
