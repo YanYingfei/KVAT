@@ -339,10 +339,10 @@ reboot:
         // std::cout<< "rej z3" <<std::endl;
         return 0;
     }
-    // if(Rej0(z4vec , r1v_ , Y4 , 1.3)){
-    //     std::cout<< "rej z4" <<std::endl;
-    //     return 0;
-    // }
+    if(Rej0(z4vec , r1v_ , Y4 , 1.3)){
+        // std::cout<< "rej z4" <<std::endl;
+        return 0;
+    }
 
 
 
