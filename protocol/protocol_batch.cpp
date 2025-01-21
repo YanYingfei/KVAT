@@ -916,7 +916,7 @@ int Verify_batch(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyma
     // right.polyarray[0]->output();
 
     if(left.equal(&right) == 0){
-        std::cout << "wrong2" << std::endl;// return E1z1 + E2z2 == w+ ctE
+        // std::cout << "wrong2" << std::endl;// return E1z1 + E2z2 == w+ ctE
         return 0;
     }
 
@@ -950,10 +950,10 @@ int Verify_batch(unsigned char *crsseed, unsigned char *pi , polymatq *A, polyma
 
     cpoly->mul(&temppoly , tpoly);
     leftpoly.sub(&leftpoly , &temppoly); 
-    // if(leftpoly.equal(v) == 0){
+    if(leftpoly.equal(v) == 0){
     //     std::cout << "wrong3" << std::endl;
-    //     return 0;
-    // }
+        return 0;
+    }
         
     delete F3 ;
     delete Fg ;
